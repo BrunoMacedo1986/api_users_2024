@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); //converte para JSON ou vice versa
+require('dotenv').config();
 
 const app = express();
 const port = 3000;
@@ -8,9 +9,9 @@ const port = 3000;
 // Configuração do MySQL
 const connection = mysql.createConnection({
   host: 'localhost',
-  user: 'root', // Seu nome de usuário do MySQL
-  password: 'senha@123', // Sua senha do MySQL
-  database: 'usersdb'
+  user: process.env.MYSQL_USER, // Usa variáveis de ambiente
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE
 });
 
 // Conectar ao banco de dados
@@ -52,26 +53,21 @@ app.get('/users/:id', (req, res) => {
   });
 });
 
+// Atualizar usuario ja existente
+app.put('/users/:id', (req, res) => {
+  const userId = req.params.id;
+  const { name, email } = req.body;
+  const UPDATE_USER_QUERY = `UPDATE users SET name = ?, email = ? WHERE id = ?`;
+  connection.query(UPDATE_USER_QUERY, [name, email, userId], (err, results) => {
+    if (err) throw err;
+    res.send('Usuário atualizado com sucesso');
+  });
+});
 
 // Iniciar o servidor
-app.listen(port, () => {
-    console.log(`Servidor rodando na porta ${port}`);
-  });
+const server = app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
 
 
-  app.put('/users/:id', (req, res) => {
-    const userId = req.params.id;
-    const { name, email } = req.body;
-    const UPDATE_USER_QUERY = `UPDATE users set name = ?, email = ? where id = ?`;
-    connection.query(UPDATE_USER_QUERY, [name, email, userId], (err, results) => {
-      if (err) throw err;
-      res.send('Usuário atualizado com sucesso');
-    });
-  });
-
-
-
-
-  
-
-  
+module.exports = {app,server,connection};
